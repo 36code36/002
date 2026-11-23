@@ -1,23 +1,29 @@
-name: C/C++ CI
+name: Build Chord Forge VST3
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: configure
-      run: ./configure
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -A x64
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Stage plugin
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path stage | Out-Null
+          Copy-Item -Recurse "build/ChordForge_artefacts/Release/VST3/Chord Forge.vst3" "stage/Chord Forge.vst3"
+
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChordForge-VST3
+          path: stage
